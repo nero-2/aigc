@@ -172,30 +172,50 @@ class ContentGenerator:
         self_positioning = self.task_data.get('self_positioning')
         content_theme = self.task_data.get('content_theme')
         keywords = self.task_data.get('keywords')
-        # 从数据库获取车的信息
-        try:
-            msg = extract_from_db(car)
-        except:
-            msg = None
         # 获得相应的平台样例文章
         plat_sample = self.sample(self.type_name[platform_style])
         # 获得相应的写作类型的样例文章
         writing_sample = self.sample(self.type_name[writing_type])
-        if brand in model:
-            car = model
-        result = '''假设你是一名专门为{}用户写文案的专家，你将根据我提供的信息来生成一段符合该平台风格的{}类型的文案，来发表你对{}的一些评价与建议，
-                 注意使用你总结的{}类型文章的特点以及{}的平台风格。
-                 {}平台当前的热点方向是"{}"，你应当思考一下如何将该热点方向与需要生成的文案形成关联，如果你认为将该热点方向融入到文案中不会使得文案变得不流畅，那么你需要将该热点方向融入到文案之中，否则就无视掉该热点方向。
-                 根据文案情感:{}来确定文章的情感调性;根据措辞风格:{}来确定文章的措辞风格;根据关键词:{}来确定文章需要突出的词;
-                 根据内容主题{}来确定生成文本的主题或焦点，文案需要围绕该主题展开，你需要在文案里体现出该主题，将其作为文案的场景;
-                 根据自我定位:{}来确定品牌或产品的市场定位和目标客户群。若果信息为None，则代表可以无视该信息。
-                 要利用{}的基本信息来介绍, 车的基本信息为{}。
-                 注意:文章要使用{}，对于车的基本信息，应当合理自然的运用到文章之中，而不是简单罗列出来，与此同时你需要严格按照我提供的汽车信息完成创作，严禁使用我未提供的汽车的信息。
-                 文章的字数要求为:{}。
-                 '''.format(platform_style, writing_type, car,
-                            writing_type, platform_style, platform_style, hotspot_direction,
-                            copy_emotion, wording_style, keywords, content_theme, self_positioning, car, msg,
-                            self.input_language, self.copy_length)
+        # 从数据库获取车的信息
+        if brand and model:  # 输入车型信息不为空，为具体车辆文案
+            car = brand + ' ' + model
+            try:
+                msg = extract_from_db(car)
+            except:
+                msg = None
+            if brand in model:
+                car_name = model
+            result = '''假设你是一名专门为{}用户写文案的专家，你将根据我提供的信息来生成一段符合该平台风格的{}类型的文案，来发表你对{}的一些评价与建议，
+                    注意使用你总结的{}类型文章的特点以及{}的平台风格。
+                    {}平台当前的热点方向是"{}"，你应当思考一下如何将该热点方向与需要生成的文案形成关联，如果你认为将该热点方向融入到文案中不会使得文案变得不流畅，那么你需要将该热点方向融入到文案之中，否则就无视掉该热点方向。
+                    根据文案情感:{}来确定文章的情感调性;根据措辞风格:{}来确定文章的措辞风格;根据关键词:{}来确定文章需要突出的词;
+                    根据内容主题{}来确定生成文本的主题或焦点，文案需要围绕该主题展开，你需要在文案里体现出该主题，将其作为文案的场景;
+                    根据自我定位:{}来确定品牌或产品的市场定位和目标客户群。若果信息为None，则代表可以无视该信息。
+                    要利用{}的基本信息来介绍, 车的基本信息为{}。
+                    注意:文章要使用{}，对于车的基本信息，应当合理自然的运用到文章之中，而不是简单罗列出来，与此同时你需要严格按照我提供的汽车信息完成创作，严禁使用我未提供的汽车的信息。
+                    文章的字数要求为:{}。
+                    '''.format(platform_style, writing_type, car_name,
+                               writing_type, platform_style, platform_style, hotspot_direction,
+                               copy_emotion, wording_style, keywords, content_theme, self_positioning, car, msg,
+                               self.input_language, self.copy_length)
+        else:  # 车型信息为空，为品牌文案生成
+            try:
+                msg = extract_from_db(brand)
+            except:
+                msg = None
+            result = '''假设你是一名专门为{}用户写文案的专家，你将根据我提供的信息来生成一段符合该平台风格的{}类型的文案，
+                    请你帮我基于汽车品牌{},基于以下事件作为主要内容{};生成该企业的品牌总结性的年度盘点文案，不需要写出具体日期，只需生成大段的总结性文案即可，
+                    不要生成“近期”“近日”此种语句。文案语言风格仿照以下样例“日前，乘联会发布了2023年12月份零售销量快报，快报显示2023年全年中国乘用车累计销量2170.3万辆，同比增长5.6%，其中新能源车全年累计销量为774万辆，同比增长了36.3%。在新能源车零售销量TOP的榜单中，理想汽车增速接近翻倍，但比亚迪、特斯拉、埃安把持前三名的格局仍然没有改变。广汽埃安全年销量483632辆，同比增长76.7%，排名第三。广汽埃安自2022年突然发力，一路冲到了新能源车销量的前三甲位置，其中AION S和AION Y两款车型功不可没，2023年，AION S的销量为220904辆，AION Y的销量为235717辆。去年下半年以来，广汽埃安重点进行了对昊铂品牌的布局，先后推出了昊铂GT、昊铂SSR以及昊铂HT等车型，为2024年的持续增长奠定了基础。吉利汽车全年销量469427辆，同比增长54%，排名第四。吉利是自主品牌阵营中新能源车销量增长较快的车企，虽然看单车销量并没有特别火热的爆款，但是吉利旗下各个品牌发展都比较均衡，吉利银河、吉利几何、极氪等品牌在2023年的新能源销量中都屡创新高。”
+                    注意使用你总结的{}类型文章的特点以及{}的平台风格。
+                    {}平台当前的热点方向是"{}"，你应当思考一下如何将该热点方向与需要生成的文案形成关联，如果你认为将该热点方向融入到文案中不会使得文案变得不流畅，那么你需要将该热点方向融入到文案之中，否则就无视掉该热点方向。
+                    根据文案情感:{}来确定文章的情感调性;根据措辞风格:{}来确定文章的措辞风格;根据关键词:{}来确定文章需要突出的词;
+                    根据内容主题{}来确定生成文本的主题或焦点，文案需要围绕该主题展开，你需要在文案里体现出该主题，将其作为文案的场景;
+                    根据自我定位:{}来确定品牌或产品的市场定位和目标客户群。若果信息为None，则代表可以无视该信息。
+                    注意:文章要使用{},文章的字数要求为:{}。
+                    '''.format(platform_style, writing_type, brand, msg,
+                               writing_type, platform_style, platform_style, hotspot_direction,
+                               copy_emotion, wording_style, keywords, content_theme, self_positioning,
+                               self.input_language, self.copy_length)
         if platform_style == '小红书':
             result += '要有符合小红书风格的emoji，同时根据文案的关键内容生成tag标签。'
         if writing_type == '用户口碑':
